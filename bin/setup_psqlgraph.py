@@ -2,16 +2,27 @@ import argparse
 from sqlalchemy import create_engine
 import logging
 
-from gdcdatamodel.models import *
+from gdcdatamodel.models import *  # noqa: F403
 from psqlgraph import create_all, Node, Edge
+from cdislogging import get_logger
+
+logger = get_logger(__name__, log_level="debug")
 
 
-def try_drop_test_data(user, database, root_user="postgres", host=""):
+def try_drop_test_data(
+    user, database, root_user="postgres", password="postgres", host="", port="5432"
+):
 
     print("Dropping old test data")
-
+    logger.info(
+        "postgres://{user}:{password}@{host}:{port}/postgres".format(
+            user=root_user, password=password, host=host, port=port
+        )
+    )
     engine = create_engine(
-        "postgres://{user}@{host}/postgres".format(user=root_user, host=host)
+        "postgres://{user}:{password}@{host}:{port}/postgres".format(
+            user=root_user, password=password, host=host, port=port
+        )
     )
 
     conn = engine.connect()
@@ -32,6 +43,7 @@ def setup_database(
     database,
     root_user="postgres",
     host="",
+    port="5432",
     no_drop=False,
     no_user=False,
 ):
@@ -41,10 +53,25 @@ def setup_database(
     print("Setting up test database")
 
     if not no_drop:
-        try_drop_test_data(user, database)
+        try_drop_test_data(
+            user=user,
+            root_user=root_user,
+            database=database,
+            host=host,
+            password=password,
+            port=port,
+        )
 
+    print("using connection string")
+    logger.info(
+        "postgres://{user}:{password}@{host}:{port}/postgres".format(
+            user=root_user, password=password, host=host, port=port
+        )
+    )
     engine = create_engine(
-        "postgres://{user}@{host}/postgres".format(user=root_user, host=host)
+        "postgres://{user}:{password}@{host}:{port}/postgres".format(
+            user=root_user, password=password, host=host, port=port
+        )
     )
     conn = engine.connect()
     conn.execute("commit")
@@ -85,7 +112,7 @@ def create_tables(host, user, password, database):
         )
     )
     create_all(engine)
-    versioned_nodes.Base.metadata.create_all(engine)
+    versioned_nodes.Base.metadata.create_all(engine)  # noqa: F405
 
 
 def create_indexes(host, user, password, database):
@@ -95,7 +122,9 @@ def create_indexes(host, user, password, database):
             user=user, host=host, pwd=password, db=database
         )
     )
-    index = lambda t, c: ["CREATE INDEX ON {} ({})".format(t, x) for x in c]
+    index = lambda t, c: [  # noqa: E731
+        "CREATE INDEX ON {} ({})".format(t, x) for x in c
+    ]
     for scls in Node.get_subclasses():
         tablename = scls.__tablename__
         list(map(engine.execute, index(tablename, ["node_id"])))

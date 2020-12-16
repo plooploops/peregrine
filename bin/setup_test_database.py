@@ -12,13 +12,18 @@ from setup_notifications import setup as create_notifications_table
 import argparse
 
 from setup_psqlgraph import setup_database, create_tables, create_indexes
+from cdislogging import get_logger
 
+logger = get_logger(__name__, log_level="debug")
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--host", type=str, action="store", default="localhost", help="psql-server host"
+    )
+    parser.add_argument(
+        "--port", type=str, action="store", default="5432", help="psql-server port"
     )
     parser.add_argument(
         "--user", type=str, action="store", default="test", help="psql test user"
@@ -45,13 +50,18 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    logger.info(args)
     setup_database(
-        args.user,
-        args.password,
-        args.database,
+        user=args.user,
+        password=args.password,
+        database=args.database,
+        host=args.host,
+        port=args.port,
         no_drop=args.no_drop,
         no_user=args.no_user,
     )
+
     create_tables(args.host, args.user, args.password, args.database)
     create_indexes(args.host, args.user, args.password, args.database)
     create_transaction_logs_table(args.host, args.user, args.password, args.database)
