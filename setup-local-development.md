@@ -40,7 +40,7 @@ You may need to reinstall graphene, so uninstall first:
 python3 -m pip uninstall graphene
 ```
 
-Make sure to add in the both the dev-requirements and requirements.txt.
+Make sure to run pip install for both [dev-requirements.txt](https://github.com/uc-cdis/peregrine/blob/master/dev-requirements.txt) and [requirements.txt](https://github.com/uc-cdis/peregrine/blob/master/requirements.txt).
 
 ```console
 python3 -m pip install -r requirements.txt
